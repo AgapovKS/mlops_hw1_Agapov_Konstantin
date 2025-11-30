@@ -5,8 +5,8 @@
 
 ## Быстрый старт
 ```bash
-git clone <repo>
-cd <repo>
+git clone https://github.com/AgapovKS/mlops_hw1_Agapov_Konstantin
+cd https://github.com/AgapovKS/mlops_hw1_Agapov_Konstantin
 python -m venv .venv && source .venv/Scripts/Activate.ps1   # PowerShell (Windows)
 pip install -r requirements.txt
 

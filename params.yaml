@@ -1,6 +1,9 @@
-split:
+prepare:
+  target_col: "Survived"
   test_size: 0.2
   random_state: 42
+  drop_columns: ["PassengerId", "Name", "Ticket", "Cabin"]
+  cat_cols: ["Sex", "Embarked"]
 
 model:
   name: "LogisticRegression"

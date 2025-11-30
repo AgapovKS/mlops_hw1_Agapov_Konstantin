@@ -22,13 +22,16 @@ def main():
     print("MLflow tracking URI:", mlflow.get_tracking_uri())
 
     # Загружаем данные
+    # внутри train.py, после загрузки params
+    target_col = params["prepare"]["target_col"]
+
     train = pd.read_csv(PROCESSED_DIR / "train.csv")
     test = pd.read_csv(PROCESSED_DIR / "test.csv")
 
-    X_train = train.drop(columns=["target"])
-    y_train = train["target"]
-    X_test = test.drop(columns=["target"])
-    y_test = test["target"]
+    X_train = train.drop(columns=[target_col])
+    y_train = train[target_col]
+    X_test = test.drop(columns=[target_col])
+    y_test = test[target_col]
 
     # fix seed для воспроизводимости
     random_state = params["split"]["random_state"]

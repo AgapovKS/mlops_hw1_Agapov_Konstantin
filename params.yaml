@@ -1,0 +1,11 @@
+split:
+  test_size: 0.2
+  random_state: 42
+
+model:
+  name: "LogisticRegression"
+  C: 1.0
+  max_iter: 200
+
+mlflow:
+  host: "http://127.0.0.1:5000"

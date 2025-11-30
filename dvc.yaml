@@ -1,0 +1,17 @@
+stages:
+  prepare:
+    cmd: python src/prepare.py
+    deps:
+      - src/prepare.py
+      - params.yaml
+      - data/raw/data.csv
+    outs:
+      - data/processed
+  train:
+    cmd: python src/train.py
+    deps:
+      - src/train.py
+      - params.yaml
+      - data/processed
+    outs:
+      - model.pkl

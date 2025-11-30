@@ -8,7 +8,7 @@ prepare:
 model:
   name: "LogisticRegression"
   C: 1.0
-  max_iter: 200
+  max_iter: 500
 
 mlflow:
   host: "http://127.0.0.1:5000"

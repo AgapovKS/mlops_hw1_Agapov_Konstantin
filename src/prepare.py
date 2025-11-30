@@ -53,8 +53,6 @@ def main():
     random_state = params["prepare"]["random_state"]
 
     df = load_or_create_raw()
-    # печатаем колонки для отладки
-    print("Columns in raw:", list(df.columns))
 
     df = basic_preprocess(df, params)
 

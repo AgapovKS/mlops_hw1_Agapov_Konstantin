@@ -10,6 +10,7 @@ venv/
 mlruns/
 mlartifacts/
 mlflow.db
+mlruns/
 
 # DVC cache 
 .dvc/cache

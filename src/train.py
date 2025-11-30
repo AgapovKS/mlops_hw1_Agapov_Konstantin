@@ -7,14 +7,40 @@ import mlflow
 import joblib
 import numpy as np
 
-# === MLflow settings ===
-os.environ["MLFLOW_TRACKING_URI"] = "http://127.0.0.1:5000"
-mlflow.set_tracking_uri(os.environ["MLFLOW_TRACKING_URI"])
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[1]  
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 MODEL_OUT = PROJECT_ROOT / "model.pkl"
 
+# Mlflow settings
+MLFLOW_DB = PROJECT_ROOT / "mlflow.db"
+MLFLOW_ARTIFACTS = PROJECT_ROOT / "mlruns" # Папка для артефактов (локальная)
+
+# --- ИСПРАВЛЕНИЕ: СНАЧАЛА УСТАНОВИТЕ TRACKING URI ---
+mlflow.set_tracking_uri(f"sqlite:///{MLFLOW_DB}")  # <-- Устанавливаем URI ПЕРЕД созданием клиента
+os.makedirs(MLFLOW_ARTIFACTS, exist_ok=True)
+print("MLflow tracking URI:", mlflow.get_tracking_uri())
+
+# Управление экспериментом
+EXPERIMENT_NAME = "Default"
+client = mlflow.tracking.MlflowClient() 
+
+try:
+    # Пытаемся получить существующий эксперимент (используя новый URI)
+    experiment = client.get_experiment_by_name(EXPERIMENT_NAME)
+    experiment_id = experiment.experiment_id
+    print(f"Используется существующий эксперимент '{EXPERIMENT_NAME}' (ID: {experiment_id})")
+    
+except AttributeError:
+    # Если эксперимент не существует, создаем его
+    artifact_uri = f"file:///{MLFLOW_ARTIFACTS.as_posix()}"
+    experiment_id = client.create_experiment(
+        EXPERIMENT_NAME, 
+        artifact_location=artifact_uri 
+    )
+    print(f"Создан новый эксперимент '{EXPERIMENT_NAME}' (ID: {experiment_id}), Artifact URI: {artifact_uri}")
+
+# Убеждаемся, что текущий запуск будет в этом эксперименте
+mlflow.set_experiment(EXPERIMENT_NAME)
 def load_params():
     with open(PROJECT_ROOT / "params.yaml", "r") as f:
         return yaml.safe_load(f)
@@ -33,10 +59,6 @@ def main():
     if not target_col:
         target_col = params.get("target_col", "target")
 
-    # MLflow URI
-    mlflow_uri = params.get("mlflow", {}).get("host", "http://127.0.0.1:5000")
-    mlflow.set_tracking_uri(mlflow_uri)
-    print("MLflow tracking URI:", mlflow.get_tracking_uri())
 
     # загружаем данные
     train = pd.read_csv(PROCESSED_DIR / "train.csv")
@@ -61,12 +83,11 @@ def main():
     model = LogisticRegression(C=C, max_iter=max_iter, random_state=random_state)
 
     with mlflow.start_run() as run:
-        # логируем параметры
         mlflow.log_param("model", model_name)
         mlflow.log_param("C", C)
         mlflow.log_param("max_iter", max_iter)
+        mlflow.log_param("random_state", random_state) # Логируем random_state
 
-        # тренируем
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
 
@@ -74,14 +95,13 @@ def main():
         acc = accuracy_score(y_test, y_pred)
         mlflow.log_metric("accuracy", float(acc))
 
-        # сохраняем модель на диск
+        # Сохраняем модель локально
         joblib.dump(model, MODEL_OUT)
-
-        # логируем модель как артефакт после сохранения
-        # создаём папку артефактов, чтобы точно существовала
-        artifact_dir = Path(PROJECT_ROOT / "mlruns" / run.info.run_id / "artifacts" / "model")
-        artifact_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Логируем артефакт модели
         mlflow.log_artifact(str(MODEL_OUT), artifact_path="model")
+        
+
 
         print(f"Run saved with id: {run.info.run_id}, accuracy: {acc:.4f}")
 
